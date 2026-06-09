@@ -1,0 +1,99 @@
+services:
+  nextmonitor-prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - nextmonitor-prometheus-data:/prometheus
+    networks:
+      - nextmonitor-net
+    restart: unless-stopped
+
+  nextmonitor-grafana:
+    image: grafana/grafana-oss:11.3.0
+    container_name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-nextmonitor_admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - nextmonitor-grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - nextmonitor-prometheus
+      - nextmonitor-loki
+    networks:
+      - nextmonitor-net
+    restart: unless-stopped
+
+  nextmonitor-loki:
+    image: grafana/loki:3.2.1
+    container_name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - nextmonitor-loki-data:/loki
+    networks:
+      - nextmonitor-net
+    restart: unless-stopped
+
+  nextmonitor-promtail:
+    image: grafana/promtail:3.2.1
+    container_name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-promtail
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - nextmonitor-loki
+    networks:
+      - nextmonitor-net
+    restart: unless-stopped
+
+  nextmonitor-otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    container_name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-otel-collector
+    command: ["--config=/etc/otelcol/otel-collector-config.yml"]
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./otel/otel-collector-config.yml:/etc/otelcol/otel-collector-config.yml:ro
+    networks:
+      - nextmonitor-net
+    restart: unless-stopped
+
+  nextmonitor-uptime-kuma:
+    image: louislam/uptime-kuma:1.23.16
+    container_name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-uptime-kuma
+    ports:
+      - "${UPTIME_KUMA_PORT:-3001}:3001"
+    volumes:
+      - nextmonitor-uptime-kuma-data:/app/data
+    networks:
+      - nextmonitor-net
+    restart: unless-stopped
+
+networks:
+  nextmonitor-net:
+    name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-net
+
+volumes:
+  nextmonitor-prometheus-data:
+  nextmonitor-grafana-data:
+  nextmonitor-loki-data:
+  nextmonitor-uptime-kuma-data:
