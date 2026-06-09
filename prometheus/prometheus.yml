@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - nextmonitor-prometheus:9090
+
+  - job_name: nextlife-services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - next-gateway:8080
+          - next-core-service:8080
+          - next-role-service:8080
+          - next-log-service:8080
+          - next-data-service:8080
+          - next-flow-service:8080
