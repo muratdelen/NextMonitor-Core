@@ -1,0 +1,9 @@
+.env
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Local data
+/data/
+/tmp/
