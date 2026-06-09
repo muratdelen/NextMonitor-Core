@@ -15,6 +15,7 @@ services:
       - nextmonitor-prometheus-data:/prometheus
     networks:
       - nextmonitor-net
+      - nextlife-net
     restart: unless-stopped
 
   nextmonitor-grafana:
@@ -35,6 +36,7 @@ services:
       - nextmonitor-loki
     networks:
       - nextmonitor-net
+      - nextlife-net
     restart: unless-stopped
 
   nextmonitor-loki:
@@ -75,6 +77,7 @@ services:
       - ./otel/otel-collector-config.yml:/etc/otelcol/otel-collector-config.yml:ro
     networks:
       - nextmonitor-net
+      - nextlife-net
     restart: unless-stopped
 
   nextmonitor-uptime-kuma:
@@ -86,11 +89,15 @@ services:
       - nextmonitor-uptime-kuma-data:/app/data
     networks:
       - nextmonitor-net
+      - nextlife-net
     restart: unless-stopped
 
 networks:
   nextmonitor-net:
     name: ${COMPOSE_PROJECT_NAME:-nextmonitor}-net
+  nextlife-net:
+    external: true
+    name: ${NEXTLIFE_DOCKER_NETWORK:-nextlife_nextlife-net}
 
 volumes:
   nextmonitor-prometheus-data:
