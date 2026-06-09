@@ -12,9 +12,9 @@ scrape_configs:
     metrics_path: /actuator/prometheus
     static_configs:
       - targets:
-          - next-gateway:8080
-          - next-core-service:8080
-          - next-role-service:8080
-          - next-log-service:8080
-          - next-data-service:8080
-          - next-flow-service:8080
+          - next-gateway:8081
+          - next-core-service:8090
+          - next-role-service:8091
+          - next-log-service:8092
+          - next-data-service:8093
+          - next-flow-service:8094
